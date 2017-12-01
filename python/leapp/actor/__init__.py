@@ -58,14 +58,26 @@ class Channel(object):
     def __init__(self, owner, name):
         self._owner = owner
         self._name = name
-        self._data = None
+        self.__data = None
+        self._iter = None
+
+    @property
+    def _data(self):
+        if self.__data is None:
+            data = self._owner.raw(self._name)
+            if not data:
+                raise AttributeError()
+            self.__data = list(data)
+        return self.__data
+
+    def __iter__(self):
+        self._iter = iter(self._data)
+        return self._iter
+
+    def __next__(self):
+        return next(self._iter)
 
     def pop(self):
-        if not self._data:
-            if self._owner.raw(self._name):
-                self._data = list(self._owner.raw(self._name))
-            else:
-                raise AttributeError()
         return self._data.pop()
 
     def push(self, message, tags=()):
