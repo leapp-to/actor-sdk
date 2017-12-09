@@ -91,12 +91,20 @@ class ChannelsBase(object):
         self._in_data = in_data
         self._out_data = {}
         self._channels = {name: Channel(self, name) for name in self._in_data.keys()}
+        self._producer = []
         atexit.register(self._write)
+
+    def add_producer(self, producer):
+        self._producer.append(producer)
 
     def exists(self, name):
         return name in self._in_data or name in self._out_data
 
     def _write(self):
+        for producer in self._producer:
+            for channel, messages in producer.get_messages().items():
+                for message in messages:
+                    self.push_message(channel, message)
         json.dump(self._out_data, self._stdout)
         self._stdout.write('\n')
 
